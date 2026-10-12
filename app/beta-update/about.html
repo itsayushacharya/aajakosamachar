@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#FAF9FF" id="themeMeta" />
+<title>हाम्रो बारेमा - आजको समाचार</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --p:#1B5FC4;--on-p:#fff;--pc:#D8E2FF;--on-pc:#001A41;
+  --s:#FAF9FF;--sc-lo:#F4F3FA;--sc:#EEEDF4;--sc-hi:#E8E7EF;--sc-hst:#E2E2E9;
+  --on-s:#1A1B20;--on-sv:#44474F;--ol:#74777F;--olv:#C4C6D0;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+  --emph:cubic-bezier(.2,0,0,1);
+}
+body.dark{
+  --p:#ADC6FF;--on-p:#002E69;--pc:#00458F;--on-pc:#D8E2FF;
+  --s:#111318;--sc-lo:#1A1B20;--sc:#1E1F25;--sc-hi:#282A2F;--sc-hst:#33353A;
+  --on-s:#E2E2E9;--on-sv:#C4C6D0;--ol:#8E9099;--olv:#44474F;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--s);color:var(--on-s);font-family:Roboto,Mukta,system-ui,sans-serif;
+  padding-bottom:calc(96px + var(--sab));-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+
+.ripple{position:relative;overflow:hidden;isolation:isolate}
+.rp{position:absolute;border-radius:50%;background:currentColor;pointer-events:none;transform:scale(0);animation:rp .55s var(--emph) forwards}
+@keyframes rp{0%{transform:scale(0);opacity:.16}70%{opacity:.12}100%{transform:scale(1);opacity:0}}
+
+.bar{position:sticky;top:0;z-index:100;padding:calc(var(--sat) + 8px) 4px 8px;display:flex;align-items:center;gap:4px;background:var(--s);transition:background .25s}
+.bar.scrolled{background:var(--sc)}
+.bar h1{flex:1;margin:0;font:600 1.4rem/1.2 Mukta,Roboto;padding-left:8px}
+.ibtn{width:48px;height:48px;border-radius:50%;border:0;background:transparent;color:var(--on-sv);font-size:1.15rem;display:grid;place-items:center;cursor:pointer;text-decoration:none}
+
+.wrap{max-width:640px;margin:0 auto;padding:8px 16px;animation:fade .3s var(--emph)}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.hero{background:var(--pc);color:var(--on-pc);border-radius:28px;padding:32px 24px;text-align:center}
+.hero .ic{width:72px;height:72px;border-radius:24px;background:var(--p);color:var(--on-p);display:grid;place-items:center;font-size:1.8rem;margin:0 auto 16px}
+.hero h2{margin:0 0 8px;font:800 1.5rem Mukta}
+.hero p{margin:0;font:500 1rem/1.7 Mukta;opacity:.85}
+
+.card{margin-top:12px;background:var(--sc-lo);border-radius:24px;padding:20px;display:flex;gap:16px;align-items:flex-start}
+.card .i{width:44px;height:44px;border-radius:14px;background:var(--pc);color:var(--on-pc);display:grid;place-items:center;flex:none;font-size:1.05rem}
+.card h3{margin:0 0 4px;font:600 1.05rem Mukta}
+.card p{margin:0;font:400 1rem/1.7 Mukta;color:var(--on-sv)}
+.foot{text-align:center;margin-top:24px;font:400 .75rem Roboto;color:var(--on-sv)}
+
+.nav{position:fixed;left:0;right:0;bottom:0;height:calc(80px + var(--sab));padding-bottom:var(--sab);background:var(--sc);display:flex;z-index:900}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--on-sv);font:500 .75rem Mukta;text-decoration:none;padding-top:12px}
+.nb .pill{width:64px;height:32px;border-radius:16px;display:grid;place-items:center;font-size:1.1rem}
+.nb:active .pill{background:var(--sc-hst)}
+</style>
+</head>
+<body>
+
+<header class="bar" id="bar">
+  <a class="ibtn ripple" href="index.html" aria-label="back"><i class="fas fa-arrow-left"></i></a>
+  <h1>हाम्रो बारेमा</h1>
+  <button class="ibtn ripple" id="theme" aria-label="theme"><i class="fas fa-moon" id="themeIcon"></i></button>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="ic"><i class="fas fa-newspaper"></i></div>
+    <h2>आजको समाचार</h2>
+    <p>नेपाली पाठकहरूका लागि तयार पारिएको एक सफा र सरल न्यूज एग्रिगेटर।</p>
+  </section>
+
+  <section class="card">
+    <div class="i"><i class="fas fa-layer-group"></i></div>
+    <div>
+      <h3>हामी के गर्छौं</h3>
+      <p>हामी विभिन्न विश्वसनीय स्रोतहरूबाट समाचार संकलन गरी एउटै ठाउँमा प्रस्तुत गर्छौं।</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="i"><i class="fas fa-bullseye"></i></div>
+    <div>
+      <h3>हाम्रो उद्देश्य</h3>
+      <p>पाठकलाई झन्झटमुक्त समाचार पढ्ने अनुभव प्रदान गर्नु हो।</p>
+    </div>
+  </section>
+
+  <div class="foot">v3.0 · © Ayush Acharya</div>
+</main>
+
+<nav class="nav">
+  <a class="nb" href="index.html"><div class="pill ripple"><i class="fas fa-house"></i></div>होम</a>
+  <a class="nb" href="index.html"><div class="pill ripple"><i class="fas fa-shapes"></i></div>विधा</a>
+  <a class="nb" href="index.html"><div class="pill ripple"><i class="fas fa-bolt"></i></div>ताजा</a>
+  <a class="nb" href="index.html"><div class="pill ripple"><i class="fas fa-bookmark"></i></div>सेभ</a>
+</nav>
+
+<script>
+// ripple
+document.addEventListener('pointerdown', ev => {
+  const t = ev.target.closest('.ripple'); if (!t) return;
+  const r = t.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2.2, el = document.createElement('span');
+  el.className = 'rp';
+  el.style.cssText = `width:${s}px;height:${s}px;left:${ev.clientX - r.left - s/2}px;top:${ev.clientY - r.top - s/2}px`;
+  t.appendChild(el); setTimeout(() => el.remove(), 600);
+}, { passive: true });
+
+// theme: same key as index.html, falls back to system setting
+const stored = localStorage.getItem('darkMode');
+let dark = stored === null ? matchMedia('(prefers-color-scheme: dark)').matches : stored === 'true';
+const apply = () => {
+  document.body.classList.toggle('dark', dark);
+  document.getElementById('themeIcon').className = 'fas ' + (dark ? 'fa-sun' : 'fa-moon');
+  localStorage.setItem('darkMode', dark);
+  setTimeout(() => document.getElementById('themeMeta').content =
+    getComputedStyle(document.body).getPropertyValue(document.getElementById('bar').classList.contains('scrolled') ? '--sc' : '--s').trim(), 50);
+};
+document.getElementById('theme').onclick = () => { dark = !dark; apply(); };
+apply();
+
+// app bar tint on scroll
+addEventListener('scroll', () => document.getElementById('bar').classList.toggle('scrolled', scrollY > 8), { passive: true });
+</script>
+</body>
+</html>
