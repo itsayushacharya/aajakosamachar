@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F3F3FA" id="themeMeta" />
+<title>आजको समाचार</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<style>
+:root{
+  --p:#1B5FC4;--on-p:#fff;--pc:#D8E2FF;--on-pc:#001A41;
+  --s:#FAF9FF;--sc-lo:#F4F3FA;--sc:#EEEDF4;--sc-hi:#E8E7EF;--sc-hst:#E2E2E9;
+  --on-s:#1A1B20;--on-sv:#44474F;--ol:#74777F;--olv:#C4C6D0;--scrim:rgba(0,0,0,.32);
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+  --emph:cubic-bezier(.2,0,0,1);--emph-d:cubic-bezier(.3,0,.8,.15);
+}
+body.dark{
+  --p:#ADC6FF;--on-p:#002E69;--pc:#00458F;--on-pc:#D8E2FF;
+  --s:#111318;--sc-lo:#1A1B20;--sc:#1E1F25;--sc-hi:#282A2F;--sc-hst:#33353A;
+  --on-s:#E2E2E9;--on-sv:#C4C6D0;--ol:#8E9099;--olv:#44474F;--scrim:rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--s);color:var(--on-s);font-family:Roboto,Mukta,system-ui,sans-serif;
+  padding-bottom:calc(80px + var(--sab));overscroll-behavior-y:contain;-webkit-font-smoothing:antialiased;
+  -webkit-user-select:none;user-select:none;transition:background .3s,color .3s}
+button{font-family:inherit}
+.np{font-family:Mukta,Roboto,sans-serif}
+
+/* ripple */
+.ripple{position:relative;overflow:hidden;isolation:isolate}
+.rp{position:absolute;border-radius:50%;background:currentColor;opacity:.14;transform:scale(0);
+  animation:rp .55s var(--emph) forwards;pointer-events:none;z-index:0}
+@keyframes rp{to{transform:scale(1);opacity:0}}
+@keyframes rp{0%{transform:scale(0);opacity:.16}70%{opacity:.12}100%{transform:scale(1);opacity:0}}
+
+/* splash (Android 12 style) */
+#splash{position:fixed;inset:0;background:var(--s);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .35s}
+#splash.hide{opacity:0;pointer-events:none}
+#splash .ic{width:112px;height:112px;border-radius:50%;background:var(--pc);display:grid;place-items:center;animation:pop .6s var(--emph)}
+#splash img{width:64px;height:64px;border-radius:16px}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* top app bar */
+.bar{position:sticky;top:0;z-index:100;padding:calc(var(--sat) + 8px) 4px 8px;display:flex;align-items:center;gap:4px;
+  background:var(--s);transition:background .25s}
+.bar.scrolled{background:var(--sc)}
+.bar h1{flex:1;margin:0;font:600 1.4rem/1.2 Mukta,Roboto;padding-left:8px}
+.ibtn{width:48px;height:48px;border-radius:50%;border:0;background:transparent;color:var(--on-sv);font-size:1.15rem;display:grid;place-items:center;cursor:pointer}
+
+/* filter chips */
+.chips{display:flex;gap:8px;padding:4px 16px 12px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--ol);background:transparent;color:var(--on-sv);
+  font:500 .875rem Mukta,Roboto;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s var(--emph)}
+.chip.on{background:var(--pc);color:var(--on-pc);border-color:transparent;padding-left:8px}
+.chip i{font-size:.8rem}
+
+/* pull to refresh */
+.ptr{position:fixed;left:50%;top:calc(var(--sat) + 64px);width:40px;height:40px;margin-left:-20px;border-radius:50%;
+  background:var(--sc-hi);color:var(--p);display:grid;place-items:center;z-index:90;box-shadow:0 2px 6px rgba(0,0,0,.2);pointer-events:none}
+.ptr i.spin{animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* hero */
+.hero{margin:0 16px 8px;height:280px;border-radius:28px;overflow:hidden;position:relative;background:var(--sc-hi);cursor:pointer}
+.hero img{width:100%;height:100%;object-fit:cover;display:block}
+.hero .ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.1) 65%)}
+.hero .tx{position:absolute;left:0;right:0;bottom:0;padding:20px;color:#fff}
+.hero h2{margin:8px 0 0;font:700 1.2rem/1.4 Mukta;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.badge{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:8px;background:rgba(255,255,255,.2);
+  backdrop-filter:blur(10px);font:500 .72rem Mukta;letter-spacing:.3px}
+.dots{display:flex;gap:4px;margin-top:12px}
+.dots span{height:4px;width:8px;border-radius:2px;background:rgba(255,255,255,.4);transition:all .3s var(--emph)}
+.dots span.on{width:20px;background:#fff}
+
+/* headers + list */
+.sh{padding:16px 20px 8px;font:600 .95rem Mukta;color:var(--p);display:flex;align-items:center;gap:8px}
+.list{padding:0 16px;display:flex;flex-direction:column;gap:2px}
+.item{display:flex;gap:16px;padding:12px 16px;background:var(--sc-lo);align-items:flex-start;cursor:pointer;transition:background .2s}
+.item:first-child{border-radius:20px 20px 4px 4px}.item:last-child{border-radius:4px 4px 20px 20px}.item:only-child{border-radius:20px}
+.item:active{background:var(--sc-hi)}
+.item .th{width:88px;height:88px;border-radius:12px;object-fit:cover;flex:none;background:var(--sc-hi)}
+.item .bd{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;position:relative;z-index:1}
+.meta{font:500 .75rem Roboto;color:var(--on-sv);display:flex;gap:6px;align-items:center}
+.meta b{color:var(--p);font:600 .75rem Mukta}
+.item h3{margin:0;font:600 1rem/1.45 Mukta;color:var(--on-s);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.num{width:36px;height:36px;border-radius:50%;background:var(--pc);color:var(--on-pc);display:grid;place-items:center;font:700 .9rem Mukta;flex:none}
+
+/* categories */
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 16px}
+.cat{background:var(--sc);border-radius:24px;padding:24px 12px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;font:600 1rem Mukta}
+.cat .ic{width:56px;height:56px;border-radius:18px;background:var(--pc);color:var(--on-pc);display:grid;place-items:center;font-size:1.3rem}
+
+.empty{text-align:center;padding:64px 24px;color:var(--on-sv);font:500 1rem Mukta}
+.empty i{display:block;font-size:2.4rem;margin-bottom:12px;color:var(--ol)}
+.fade{animation:fade .3s var(--emph)}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.shim{background:linear-gradient(90deg,var(--sc-hi) 25%,var(--sc-hst) 37%,var(--sc-hi) 63%);background-size:400% 100%;animation:sh 1.4s infinite;border-radius:12px}
+@keyframes sh{from{background-position:100% 0}to{background-position:0 0}}
+
+/* navigation bar */
+.nav{position:fixed;left:0;right:0;bottom:0;height:calc(80px + var(--sab));padding-bottom:var(--sab);background:var(--sc);display:flex;z-index:900}
+.nb{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:var(--on-sv);font:500 .75rem Mukta;cursor:pointer;padding-top:12px}
+.nb .pill{width:64px;height:32px;border-radius:16px;display:grid;place-items:center;font-size:1.1rem;transition:background .25s var(--emph)}
+.nb.on{color:var(--on-s);font-weight:700}
+.nb.on .pill{background:var(--pc);color:var(--on-pc)}
+.nb:active .pill{background:var(--sc-hst)}
+
+/* FAB */
+.fab{position:fixed;right:16px;bottom:calc(96px + var(--sab));width:56px;height:56px;border-radius:16px;border:0;background:var(--pc);color:var(--on-pc);
+  font-size:1.2rem;display:grid;place-items:center;z-index:800;box-shadow:0 3px 8px rgba(0,0,0,.25);transition:transform .25s var(--emph),opacity .25s}
+.fab.hide{transform:scale(0);opacity:0}
+.fab:active{transform:scale(.92)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:1999;animation:fi .25s}
+@keyframes fi{from{opacity:0}}
+.sheet{position:fixed;left:0;right:0;bottom:0;top:calc(var(--sat) + 48px);background:var(--sc-lo);border-radius:28px 28px 0 0;z-index:2000;
+  display:flex;flex-direction:column;overflow:hidden;animation:up .4s var(--emph);max-width:640px;margin:0 auto}
+@keyframes up{from{transform:translateY(100%)}}
+.handle{padding:12px 0 8px;touch-action:none;flex:none}
+.handle i{display:block;width:32px;height:4px;border-radius:2px;background:var(--ol);margin:0 auto;opacity:.4}
+.sbar{display:flex;align-items:center;padding:0 8px 4px;flex:none}
+.sbar span{flex:1;font:600 1rem Mukta;color:var(--on-s);padding-left:8px}
+.rc{flex:1;overflow-y:auto;padding:8px 24px 48px;-webkit-user-select:text;user-select:text}
+.rc h1{font:700 1.5rem/1.4 Mukta;margin:0 0 12px}
+.ri{display:flex;flex-wrap:wrap;gap:6px 16px;font:500 .8rem Roboto;color:var(--on-sv);margin-bottom:16px}
+.ri i{margin-right:6px;color:var(--p)}
+.rc img{width:100%;max-height:260px;object-fit:cover;border-radius:20px;margin-bottom:16px}
+.rt{font:400 1.1rem/1.9 Mukta;white-space:pre-wrap}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;margin-top:28px;border-radius:24px;background:var(--p);color:var(--on-p);
+  font:600 .95rem Mukta;text-decoration:none}
+
+/* drawer */
+.dscrim{position:fixed;inset:0;background:var(--scrim);z-index:1100;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.dscrim.on{opacity:1;visibility:visible}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(320px,85vw);background:var(--sc-lo);border-radius:0 28px 28px 0;z-index:1101;
+  transform:translateX(-105%);transition:transform .35s var(--emph);padding:calc(var(--sat) + 20px) 12px 20px;display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer h2{font:600 1.05rem Mukta;margin:0;padding:12px 16px 4px}
+.drawer small{display:block;padding:0 16px 16px;color:var(--on-sv);font:400 .75rem Roboto}
+.drawer a{display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;border-radius:28px;color:var(--on-sv);text-decoration:none;font:500 .95rem Mukta}
+.drawer a i{width:24px;text-align:center;color:var(--p)}
+.drawer hr{border:0;height:1px;background:var(--olv);margin:8px 16px}
+
+/* snackbar + heads-up */
+.snack{position:fixed;left:16px;right:16px;bottom:calc(96px + var(--sab));background:#2F3036;color:#F1F0F7;border-radius:4px;padding:14px 16px;z-index:3000;
+  font:400 .9rem Mukta;transform:translateY(calc(100% + 200px));opacity:0;visibility:hidden;pointer-events:none;
+  transition:transform .3s var(--emph),opacity .2s,visibility .3s;max-width:560px;margin:0 auto}
+.snack.on{transform:none;opacity:1;visibility:visible}
+.notif{position:fixed;top:-140px;left:12px;right:12px;background:var(--sc-hst);border-radius:24px;padding:14px 16px;display:flex;gap:12px;align-items:center;
+  z-index:3100;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:top .4s var(--emph);cursor:pointer;max-width:560px;margin:0 auto}
+.notif.on{top:calc(var(--sat) + 12px)}
+.notif img{width:40px;height:40px;border-radius:12px}
+.notif div{min-width:0;flex:1}
+.notif b{display:block;font:600 .72rem Mukta;color:var(--p)}
+.notif p{margin:2px 0 0;font:600 .9rem Mukta;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const e = React.createElement;
+const { useState, useEffect, useRef, useMemo } = React;
+const ICON = 'https://raw.githubusercontent.com/ayushacharya05/aajakosamachar/main/images/icon.png';
+
+const FEEDS = [
+  ["OnlineKhabar","https://www.onlinekhabar.com/feed"],["Setopati","https://setopati.com/feed"],
+  ["Ratopati","https://www.ratopati.com/feed"],["Kantipur","https://ekantipur.com/rss/news"],
+  ["TechPana","https://www.techpana.com/feed"],["BBC Nepali","https://www.bbc.co.uk/nepali/index.xml"],
+  ["Our Biratnagar","https://ourbiratnagar.net/feed"],["Nepal Press","https://www.nepalpress.com/feed"],
+  ["Himal Khabar","https://www.himalkhabar.com/rss"],["Nepal News","https://nepalnews.com/rss"],
+  ["Image Khabar","https://www.imagekhabar.com/feed"],["Annapurna Post","https://annapurnapost.com/rss"],
+  ["DC Nepal","https://www.dcnepal.com/feed"],["Nepal Khabar","https://nepalkhabar.com/rss"],
+  ["ICT frame","https://np.ictframe.com/rss"],["Technology Khabar","https://www.technologykhabar.com/rss"],
+  ["News filmy","https://newsfilmy.com/rss"],["Nepali Paisa","https://nepalipaisa.com/rss"],
+  ["Ramailo Cha","https://www.ramailo6.com/rss"],["Bizmandu","https://bizmandu.com/rss"],
+  ["Baahrakhari","https://baahrakhari.com/feed"]
+].map(([name, url]) => ({ name, url }));
+
+const CATS = [
+  { id:'All', label:'सबै', icon:'fa-border-all' }, { id:'Politics', label:'राजनीति', icon:'fa-landmark' },
+  { id:'Sports', label:'खेलकुद', icon:'fa-trophy' }, { id:'Tech', label:'प्रविधि', icon:'fa-microchip' },
+  { id:'Entertainment', label:'मनोरञ्जन', icon:'fa-film' }, { id:'Economy', label:'अर्थ', icon:'fa-chart-line' }
+];
+const NAMES = [['onlinekhabar','अनलाइनखबर'],['setopati','सेतोपाटी'],['ratopati','रातोपाटी'],['nepalkhabar','नेपालखबर'],
+  ['biratnagar','हाम्रो विराटनगर'],['kantipur','कान्तिपुर'],['bbc','बीबीसी नेपाली'],['himal','हिमालखबर'],['annapurna','अन्नपूर्ण'],['bizmandu','बिजमाण्डू']];
+
+function cleanSourceName(name) {
+  if (!name) return 'समाचार';
+  const n = name.toLowerCase().replace(/\s/g, '');
+  const hit = NAMES.find(([k]) => n.includes(k));
+  if (hit) return hit[1];
+  const p = name.split(' ');
+  return p.length > 1 ? p[0] + ' ' + p[1] : p[0];
+}
+function getTopic(t) {
+  if (/खेल|क्रिकेट|फुटबल/i.test(t)) return 'Sports';
+  if (/राजनीति|नेता|सरकार|संसद|मन्त्री/i.test(t)) return 'Politics';
+  if (/प्रविधि|मोबाइल|इन्टरनेट|इलेक्ट्रोनिक्स/i.test(t)) return 'Tech';
+  if (/फिल्म|मनोरञ्जन|कलाकार|भिडियो|सिनेमा/i.test(t)) return 'Entertainment';
+  if (/बैंक|अर्थ|बजार|शेयर|पूंजी|बजेट/i.test(t)) return 'Economy';
+  return 'General';
+}
+const getImage = i => i.thumbnail || i.enclosure?.link || i.description?.match(/<img[^>]+src="([^">]+)"/)?.[1];
+function relTime(s) {
+  if (!s) return '';
+  const d = (Date.now() - new Date(s).getTime()) / 1000;
+  if (d < 60) return 'अहिले';
+  if (d < 3600) return Math.floor(d/60) + ' मिनेट अघि';
+  if (d < 86400) return Math.floor(d/3600) + ' घण्टा अघि';
+  if (d < 604800) return Math.floor(d/86400) + ' दिन अघि';
+  return new Date(s).toLocaleDateString('ne-NP', { month:'short', day:'numeric' });
+}
+const buzz = (ms = 8) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (_) {} };
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (_) { return d; } };
+
+// global touch ripple
+document.addEventListener('pointerdown', ev => {
+  const t = ev.target.closest && ev.target.closest('.ripple');
+  if (!t) return;
+  const r = t.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.2;
+  const s = document.createElement('span');
+  s.className = 'rp';
+  s.style.cssText = `width:${size}px;height:${size}px;left:${ev.clientX - r.left - size/2}px;top:${ev.clientY - r.top - size/2}px`;
+  t.appendChild(s);
+  setTimeout(() => s.remove(), 600);
+}, { passive: true });
+
+function App() {
+  const [allNews, setAllNews] = useState([]);
+  const [cat, setCat] = useState('All');
+  const [saved, setSaved] = useState(() => load('savedNews', []));
+  const [view, setView] = useState('home');
+  const [reader, setReader] = useState(null);
+  const [drawer, setDrawer] = useState(false);
+  const [dark, setDark] = useState(() => {
+    const v = localStorage.getItem('darkMode');
+    return v === null ? matchMedia('(prefers-color-scheme: dark)').matches : v === 'true';
+  });
+  const [loading, setLoading] = useState(true);
+  const [splash, setSplash] = useState(true);
+  const [hero, setHero] = useState(0);
+  const [notif, setNotif] = useState(null);
+  const [notifOn, setNotifOn] = useState(false);
+  const [snack, setSnack] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+  const [pull, setPull] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const lastLink = useRef(localStorage.getItem('lastTrackedLink') || '');
+  const ignorePop = useRef(false);
+  const st = useRef({});
+  const sheetRef = useRef(null);
+  st.current = { reader, drawer, view };
+
+  useEffect(() => {
+    document.body.classList.toggle('dark', dark);
+    localStorage.setItem('darkMode', dark);
+    setTimeout(() => {
+      const c = getComputedStyle(document.body).getPropertyValue(scrolled ? '--sc' : '--s').trim();
+      document.getElementById('themeMeta').content = c;
+    }, 50);
+  }, [dark, scrolled]);
+
+  useEffect(() => {
+    window.history.replaceState({ root: true }, '');
+    const t = setTimeout(() => { setSplash(false); fetchNews(); }, 1200);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => { const id = setInterval(() => fetchNews(true), 60000); return () => clearInterval(id); }, []);
+
+  // system back button: sheet -> drawer -> tab -> home
+  useEffect(() => {
+    const onPop = () => {
+      if (ignorePop.current) { ignorePop.current = false; return; }
+      const s = st.current;
+      if (s.reader) setReader(null);
+      else if (s.drawer) setDrawer(false);
+      else if (s.view !== 'home') { setView('home'); window.scrollTo(0, 0); }
+    };
+    addEventListener('popstate', onPop);
+    return () => removeEventListener('popstate', onPop);
+  }, []);
+
+  // scroll state for top bar tint + FAB
+  useEffect(() => {
+    const f = () => setScrolled(scrollY > 8);
+    addEventListener('scroll', f, { passive: true });
+    return () => removeEventListener('scroll', f);
+  }, []);
+
+  // pull to refresh
+  useEffect(() => {
+    let y0 = null;
+    const ts = ev => { const s = st.current; y0 = (scrollY <= 0 && s.view === 'home' && !s.reader && !s.drawer) ? ev.touches[0].clientY : null; };
+    const tm = ev => { if (y0 === null) return; const dy = ev.touches[0].clientY - y0; if (dy > 0) setPull(Math.min(dy * 0.45, 80)); else setPull(0); };
+    const te = () => {
+      if (y0 === null) return;
+      y0 = null;
+      setPull(p => { if (p >= 64) { buzz(15); fetchNews(false, true); } return 0; });
+    };
+    addEventListener('touchstart', ts, { passive: true });
+    addEventListener('touchmove', tm, { passive: true });
+    addEventListener('touchend', te);
+    return () => { removeEventListener('touchstart', ts); removeEventListener('touchmove', tm); removeEventListener('touchend', te); };
+  }, []);
+
+  const pushState = () => { ignorePop.current = true; history.pushState({}, ''); setTimeout(() => { ignorePop.current = false; }, 50); };
+  const openReader = item => { buzz(); setReader(item); pushState(); };
+  const openDrawer = () => { setDrawer(true); pushState(); };
+  const closeLayer = () => history.back();
+  const changeView = v => { if (v === view) { scrollTo({ top: 0, behavior: 'smooth' }); return; } buzz(); setView(v); scrollTo(0, 0); };
+  const toast = m => { setSnack(m); setTimeout(() => setSnack(''), 2400); };
+
+  const playSound = () => {
+    try {
+      const c = new (window.AudioContext || window.webkitAudioContext)(), n = c.currentTime;
+      [523.25, 659.25].forEach((f, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.frequency.value = f; g.gain.setValueAtTime(.08, n + i*.1);
+        g.gain.exponentialRampToValueAtTime(.0001, n + i*.1 + .25);
+        o.start(n + i*.1); o.stop(n + i*.1 + .3);
+      });
+    } catch (_) {}
+  };
+
+  const fetchNews = async (silent = false, pulled = false) => {
+    if (pulled) setRefreshing(true); else if (!silent) setLoading(true);
+    try {
+      const res = await Promise.allSettled(FEEDS.map(f =>
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`).then(r => r.json())));
+      const items = res.filter(r => r.status === 'fulfilled' && r.value?.items).flatMap(r =>
+        r.value.items.map(it => ({ ...it, sourceName: cleanSourceName(r.value.feed?.title || r.value.feed?.name), topic: getTopic(it.title) })));
+      items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+      if (items.length) {
+        if (lastLink.current && lastLink.current !== items[0].link) {
+          setNotif(items[0]); setNotifOn(true); playSound(); buzz(30);
+          setTimeout(() => setNotifOn(false), 6000);
+        }
+        lastLink.current = items[0].link;
+        localStorage.setItem('lastTrackedLink', items[0].link);
+        setAllNews(items);
+        if (pulled) toast('समाचार अपडेट भयो');
+      } else if (pulled) toast('अपडेट गर्न सकिएन');
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); setRefreshing(false); }
+  };
+
+  const share = async item => {
+    if (navigator.share) { try { await navigator.share({ title: item.title, text: item.sourceName, url: item.link }); } catch (_) {} }
+    else window.open(item.link, '_blank');
+  };
+  const toggleSave = item => {
+    const has = saved.some(n => n.link === item.link);
+    const next = has ? saved.filter(n => n.link !== item.link) : [...saved, item];
+    setSaved(next);
+    try { localStorage.setItem('savedNews', JSON.stringify(next)); } catch (_) {}
+    buzz(); toast(has ? 'सेभबाट हटाइयो' : 'सेभ गरियो');
+  };
+
+  const filtered = useMemo(() => cat === 'All' ? allNews : allNews.filter(n => n.topic === cat), [allNews, cat]);
+  const heroItems = useMemo(() => filtered.filter(getImage).slice(0, 6), [filtered]);
+  const listItems = useMemo(() => { const h = new Set(heroItems.map(x => x.link)); return filtered.filter(n => !h.has(n.link)); }, [filtered, heroItems]);
+
+  useEffect(() => {
+    if (heroItems.length < 2) return;
+    const id = setInterval(() => setHero(i => (i + 1) % heroItems.length), 5000);
+    return () => clearInterval(id);
+  }, [heroItems.length]);
+  useEffect(() => setHero(0), [cat]);
+
+  // swipe-down to dismiss the sheet
+  const dragStart = ev => {
+    const el = sheetRef.current; if (!el) return;
+    const y0 = ev.touches[0].clientY; let dy = 0;
+    el.style.animation = 'none';
+    const mv = m => { dy = Math.max(0, m.touches[0].clientY - y0); el.style.transform = `translateY(${dy}px)`; };
+    const up = () => {
+      removeEventListener('touchmove', mv); removeEventListener('touchend', up);
+      if (dy > 110) closeLayer(); else { el.style.transition = 'transform .25s var(--emph)'; el.style.transform = ''; }
+    };
+    addEventListener('touchmove', mv, { passive: true }); addEventListener('touchend', up);
+  };
+
+  if (splash) return e('div', { id:'splash' }, e('div', { className:'ic' }, e('img', { src: ICON, alt:'' })));
+
+  const catObj = CATS.find(c => c.id === cat) || CATS[0];
+
+  const row = (item, i, opts = {}) => {
+    const img = getImage(item);
+    return e('article', { key: item.link || i, className:'item ripple', onClick: () => openReader(item) },
+      opts.num ? e('div', { className:'num' }, String(i + 1))
+        : (img ? e('img', { className:'th', src: img, alt:'', loading:'lazy' }) : e('div', { className:'th shim' })),
+      e('div', { className:'bd' },
+        e('div', { className:'meta' }, e('b', null, item.sourceName), opts.noTime ? null : e('span', null, '• ' + relTime(item.pubDate))),
+        e('h3', null, item.title)));
+  };
+
+  const skeleton = n => e('div', { className:'list' }, Array.from({ length: n }, (_, k) =>
+    e('div', { key:k, className:'item' }, e('div', { className:'th shim' }),
+      e('div', { className:'bd' }, e('div', { className:'shim', style:{ height:12, width:'40%' } }),
+        e('div', { className:'shim', style:{ height:14, width:'95%' } }), e('div', { className:'shim', style:{ height:14, width:'70%' } })))));
+
+  const NAV = [['home','होम','fa-house'],['categories','विधा','fa-shapes'],['taja','ताजा','fa-bolt'],['saved','सेभ','fa-bookmark']];
+  const h = heroItems[hero];
+
+  return e('div', null,
+    // heads-up notification
+    e('div', { className:`notif ${notifOn ? 'on' : ''}`, onClick: () => { if (notif) { openReader(notif); setNotifOn(false); } } },
+      e('img', { src: ICON, alt:'' }),
+      e('div', null, e('b', null, notif ? `ताजा • ${notif.sourceName}` : ''), e('p', null, notif ? notif.title : ''))),
+
+    // top app bar
+    e('header', { className:`bar ${scrolled ? 'scrolled' : ''}` },
+      e('button', { className:'ibtn ripple', 'aria-label':'menu', onClick: openDrawer }, e('i', { className:'fas fa-bars' })),
+      e('h1', null, view === 'home' ? 'आजको समाचार' : NAV.find(n => n[0] === view)[1]),
+      e('button', { className:'ibtn ripple', 'aria-label':'theme', onClick: () => setDark(!dark) }, e('i', { className:`fas ${dark ? 'fa-sun' : 'fa-moon'}` }))),
+
+    // pull-to-refresh indicator
+    (pull > 4 || refreshing) && e('div', { className:'ptr', style:{ transform:`translateY(${refreshing ? 20 : pull - 20}px)`, opacity: refreshing ? 1 : Math.min(pull / 50, 1) } },
+      e('i', { className:`fas fa-rotate ${refreshing ? 'spin' : ''}`, style:{ transform: refreshing ? '' : `rotate(${pull * 4}deg)` } })),
+
+    // drawer
+    e('div', { className:`dscrim ${drawer ? 'on' : ''}`, onClick: closeLayer }),
+    e('aside', { className:`drawer ${drawer ? 'on' : ''}` },
+      e('h2', null, 'आजको समाचार'), e('small', null, 'नेपाली न्यूज एग्रिगेटर'),
+      e('a', { className:'ripple', href:'https://aajakosamachar.ayushacharya.info.np/app/about.html' }, e('i', { className:'fas fa-circle-info' }), 'हाम्रो बारेमा'),
+      e('a', { className:'ripple', href:'https://aajakosamachar.ayushacharya.info.np/app/support.html' }, e('i', { className:'fas fa-headset' }), 'सहयोग'),
+      e('div', { style:{ flex:1 } }),
+      e('small', null, 'v3.0 · © Ayush Acharya')),
+
+    // content
+    e('main', { className:'fade', key: view + cat },
+      view === 'home' && e('div', null,
+        e('div', { className:'chips' }, CATS.map(c => e('button', {
+          key: c.id, className:`chip ripple ${cat === c.id ? 'on' : ''}`, onClick: () => { buzz(); setCat(c.id); }
+        }, cat === c.id ? e('i', { className:'fas fa-check' }) : null, c.label))),
+        loading && skeleton(5),
+        !loading && h && e('div', { className:'hero ripple', onClick: () => openReader(h) },
+          e('img', { src: getImage(h), alt:'' }), e('div', { className:'ov' }),
+          e('div', { className:'tx' }, e('span', { className:'badge' }, h.sourceName), e('h2', null, h.title),
+            e('div', { className:'dots' }, heroItems.map((_, i) => e('span', { key:i, className: i === hero ? 'on' : '' }))))),
+        !loading && listItems.length > 0 && e('div', { className:'sh' }, e('i', { className:'fas fa-bolt' }), cat === 'All' ? 'ताजा अपडेट' : catObj.label),
+        !loading && e('div', { className:'list' }, listItems.slice(0, 30).map((it, i) => row(it, i))),
+        !loading && !listItems.length && !h && e('div', { className:'empty' }, e('i', { className:'fas fa-newspaper' }), 'यस विधामा कुनै समाचार उपलब्ध छैन।')),
+
+      view === 'categories' && e('div', { className:'cats' }, CATS.filter(c => c.id !== 'All').map(c =>
+        e('div', { key: c.id, className:'cat ripple', onClick: () => { setCat(c.id); setView('home'); scrollTo(0, 0); } },
+          e('div', { className:'ic' }, e('i', { className:`fas ${c.icon}` })), c.label))),
+
+      view === 'taja' && e('div', null, e('div', { className:'sh' }, e('i', { className:'fas fa-fire' }), 'ताजा ४०'),
+        loading ? skeleton(6) : e('div', { className:'list' }, allNews.slice(0, 40).map((it, i) => row(it, i, { num:true, noTime:true })))),
+
+      view === 'saved' && (saved.length === 0
+        ? e('div', { className:'empty' }, e('i', { className:'far fa-bookmark' }), 'कुनै समाचार सेभ गरिएको छैन।')
+        : e('div', { className:'list', style:{ paddingTop:8 } }, saved.map((it, i) => row(it, i))))),
+
+    // refresh FAB
+    e('button', { className:`fab ripple ${view === 'home' && scrolled ? '' : 'hide'}`, 'aria-label':'top', onClick: () => scrollTo({ top:0, behavior:'smooth' }) },
+      e('i', { className:'fas fa-arrow-up' })),
+
+    // modal bottom sheet reader
+    reader && (() => {
+      const img = getImage(reader), isSaved = saved.some(n => n.link === reader.link);
+      const txt = new DOMParser().parseFromString(reader.content || reader.description || '', 'text/html').body.textContent || '';
+      return e(React.Fragment, null,
+        e('div', { className:'scrim', onClick: closeLayer }),
+        e('div', { className:'sheet', ref: sheetRef },
+          e('div', { className:'handle', onTouchStart: dragStart }, e('i')),
+          e('div', { className:'sbar' },
+            e('button', { className:'ibtn ripple', onClick: closeLayer }, e('i', { className:'fas fa-xmark' })),
+            e('span', null, reader.sourceName),
+            e('button', { className:'ibtn ripple', onClick: () => share(reader) }, e('i', { className:'fas fa-share-nodes' })),
+            e('button', { className:'ibtn ripple', onClick: () => toggleSave(reader) },
+              e('i', { className:`${isSaved ? 'fas' : 'far'} fa-bookmark`, style:{ color: isSaved ? 'var(--p)' : '' } }))),
+          e('div', { className:'rc' },
+            e('h1', null, reader.title),
+            e('div', { className:'ri' }, e('span', null, e('i', { className:'fas fa-newspaper' }), reader.sourceName),
+              e('span', null, e('i', { className:'fas fa-clock' }), relTime(reader.pubDate))),
+            img && e('img', { src: img, alt:'' }),
+            e('div', { className:'rt' }, txt),
+            e('a', { className:'btn ripple', href: reader.link, target:'_blank', rel:'noreferrer' }, 'पूरा स्रोतमा हेर्नुहोस्', e('i', { className:'fas fa-arrow-up-right-from-square' })))));
+    })(),
+
+    // snackbar
+    e('div', { className:`snack ${snack ? 'on' : ''}` }, snack),
+
+    // navigation bar
+    e('nav', { className:'nav' }, NAV.map(([id, label, icon]) =>
+      e('button', { key: id, className:`nb ${view === id ? 'on' : ''}`, onClick: () => changeView(id) },
+        e('div', { className:'pill ripple' }, e('i', { className:`${view === id && id === 'saved' ? 'fas' : 'fas'} ${icon}` })), label))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+</script>
+</body>
+</html>
