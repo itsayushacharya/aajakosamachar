@@ -84,7 +84,7 @@ body.dark .sb.gh{background:#4A4D55}
       <div class="i"><i class="fas fa-user"></i></div>
       <div class="t"><b>Ayush Acharya</b><small>Developer</small></div>
     </div>
-    <a class="li ripple" href="mailto:contact@ayushacharya5.com.np">
+    <a class="li ripple" id="mail" href="https://mail.google.com/mail/?view=cm&fs=1&to=contact@ayushacharya5.com.np">
       <div class="i"><i class="fas fa-envelope"></i></div>
       <div class="t"><b>इमेल</b><small>contact@ayushacharya5.com.np</small></div>
       <i class="fas fa-chevron-right go"></i>
@@ -130,6 +130,16 @@ document.getElementById('theme').onclick = () => { dark = !dark; apply(); };
 apply();
 addEventListener('scroll', () => bar.classList.toggle('scrolled', scrollY > 8), { passive: true });
 
+
+// open email in Gmail (Android app if installed, otherwise Gmail web)
+document.getElementById('mail').addEventListener('click', ev => {
+  if (!/Android/i.test(navigator.userAgent)) return; // desktop: Gmail web link opens normally
+  ev.preventDefault();
+  const to = 'contact@ayushacharya5.com.np';
+  const web = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + to;
+  location.href = 'intent:#Intent;action=android.intent.action.SENDTO;data=mailto:' + to +
+    ';package=com.google.android.gm;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+});
 </script>
 </body>
 </html>
