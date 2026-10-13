@@ -437,8 +437,8 @@ function App() {
     e('div', { className:`dscrim ${drawer ? 'on' : ''}`, onClick: closeLayer }),
     e('aside', { className:`drawer ${drawer ? 'on' : ''}` },
       e('h2', null, 'आजको समाचार'), e('small', null, 'नेपाली न्यूज एग्रिगेटर'),
-      e('a', { className:'ripple', href:'https://aajakosamachar.ayushacharya.info.np/app/beta-update/about' }, e('i', { className:'fas fa-circle-info' }), 'हाम्रो बारेमा'),
-      e('a', { className:'ripple', href:'https://aajakosamachar.ayushacharya.info.np/app/beta-update/support' }, e('i', { className:'fas fa-headset' }), 'सहयोग'),
+      e('a', { className:'ripple', href:'/about' }, e('i', { className:'fas fa-circle-info' }), 'हाम्रो बारेमा'),
+      e('a', { className:'ripple', href:'/support' }, e('i', { className:'fas fa-headset' }), 'सहयोग'),
       e('div', { style:{ flex:1 } }),
       e('small', null, 'v3.0 · © Ayush Acharya')),
 
