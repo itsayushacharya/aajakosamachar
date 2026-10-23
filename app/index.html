@@ -174,16 +174,7 @@
 
     const CACHE_KEY = 'newsCache';
 
-    // Optional but recommended: your own Cloudflare Worker proxy, e.g.
-    // 'https://rss-proxy.yourname.workers.dev'  (leave '' to use public proxies only)
-    const PROXY_URL = '';
-
-    const FEED_DEBUG = {};          // per-feed result, inspect with window.__feedDebug
-    window.__feedDebug = FEED_DEBUG;
-
-    const ts = (d) => { const t = Date.parse(d); return isNaN(t) ? 0 : t; };
-
-    function fetchWithTimeout(url, ms = 9000) {
+    function fetchWithTimeout(url, ms = 8000) {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), ms);
       return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
@@ -191,9 +182,8 @@
 
     function parseRSS(xmlText) {
       const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
-      if (xml.getElementsByTagName('parsererror').length) throw new Error('invalid XML');
       const txt = (el, tag) => el.getElementsByTagName(tag)[0]?.textContent || '';
-      const items = [...xml.getElementsByTagName('item')].map(it => {
+      return [...xml.getElementsByTagName('item')].map(it => {
         const html = txt(it, 'content:encoded') || txt(it, 'description');
         const media = it.getElementsByTagName('media:content')[0]?.getAttribute('url')
                    || it.getElementsByTagName('media:thumbnail')[0]?.getAttribute('url');
@@ -205,62 +195,23 @@
           pubDate: txt(it, 'pubDate') || txt(it, 'dc:date'),
           description: html,
           content: html,
-          // OnlineKhabar puts the image in a plain <image> tag inside each item
-          thumbnail: media || enc || txt(it, 'image').trim() || inImg || ''
+          thumbnail: media || enc || inImg || ''
         };
       }).filter(i => i.title && i.link);
-      if (!items.length) throw new Error('no items in feed');
-      return items;
-    }
-
-    async function viaXml(url) {
-      const r = await fetchWithTimeout(url);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return parseRSS(await r.text());
-    }
-
-    async function viaJsonWrapper(url) {          // allorigins /get returns {contents: "..."}
-      const r = await fetchWithTimeout(url);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const d = await r.json();
-      return parseRSS(d.contents || '');
-    }
-
-    async function viaRss2Json(feedUrl) {
-      const r = await fetchWithTimeout(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
-      const d = await r.json();
-      if (d.status !== 'ok' || !d.items?.length) throw new Error(d.message || ('status ' + d.status));
-      return d.items;
     }
 
     async function fetchFeed(f) {
-      const enc = encodeURIComponent(f.url);
-      const errors = [];
-      const note = (name) => (err) => { errors.push(name + ': ' + (err.message || err)); throw err; };
-
-      // 1) your own proxy (most reliable)
-      if (PROXY_URL) {
-        try {
-          const items = await viaXml(`${PROXY_URL}?url=${enc}`).catch(note('worker'));
-          FEED_DEBUG[f.name] = 'ok (worker) ' + items.length; return items;
-        } catch (_) {}
-      }
-      // 2) race public proxies (independent services, so no shared rate limit)
+      // 1st try: rss2json
       try {
-        const items = await Promise.any([
-          viaXml(`https://api.allorigins.win/raw?url=${enc}`).catch(note('allorigins')),
-          viaJsonWrapper(`https://api.allorigins.win/get?url=${enc}`).catch(note('allorigins-json')),
-          viaXml(`https://api.codetabs.com/v1/proxy?quest=${enc}`).catch(note('codetabs'))
-        ]);
-        FEED_DEBUG[f.name] = 'ok (proxy) ' + items.length; return items;
+        const r = await fetchWithTimeout(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`);
+        const d = await r.json();
+        if (d.status === 'ok' && d.items?.length) return d.items;
       } catch (_) {}
-      // 3) last resort: rss2json
+      // Fallback: CORS proxy + parse XML ourselves
       try {
-        const items = await viaRss2Json(f.url);
-        FEED_DEBUG[f.name] = 'ok (rss2json) ' + items.length; return items;
-      } catch (err) { errors.push('rss2json: ' + (err.message || err)); }
-
-      FEED_DEBUG[f.name] = errors.join(' | ');
+        const r = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(f.url)}`);
+        return parseRSS(await r.text());
+      } catch (_) {}
       return [];
     }
 
@@ -440,7 +391,7 @@
             collected.push({ ...item, sourceName: cleanSourceName(feed.name), topic: getTopic(item.title || '') });
           });
           if (collected.length) {
-            const sorted = [...collected].sort((a, b) => ts(b.pubDate) - ts(a.pubDate));
+            const sorted = [...collected].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
             setAllNews(sorted); setDisplayedNews(sorted);
             if (firstRender) { firstRender = false; setLoading(false); } // progressive render
           }
@@ -453,14 +404,13 @@
         }));
 
         if (collected.length) {
-          collected.sort((a, b) => ts(b.pubDate) - ts(a.pubDate));
+          collected.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
           const top = collected[0];
           if (lastTrackedLink.current && lastTrackedLink.current !== top.link) triggerInAppAlert(top);
           lastTrackedLink.current = top.link;
           localStorage.setItem('lastTrackedLink', top.link);
           try { localStorage.setItem(CACHE_KEY, JSON.stringify(collected.slice(0, 60))); } catch (_) {}
         }
-        try { console.table(FEED_DEBUG); } catch (_) {}
         setLoading(false);
       };
 
@@ -498,17 +448,6 @@
             e('div', { className: 'shimmer rounded-1', style: { height: '15px', width: '30%' } }),
             e('div', { className: 'shimmer rounded-1', style: { height: '24px', width: '90%' } })
           ))
-        )
-      );
-
-      const renderEmptyState = () => (
-        e('div', { className: 'container pt-5 text-center' },
-          e('i', { className: 'fas fa-triangle-exclamation fs-1 text-primary mb-3' }),
-          e('h5', { style: { fontFamily: "'Mukta'", fontWeight: 700 } }, 'समाचार लोड गर्न सकिएन'),
-          e('p', { className: 'opacity-75' }, 'इन्टरनेट जाँच गरेर फेरि प्रयास गर्नुहोस्।'),
-          e('button', { className: 'btn btn-primary rounded-pill px-4 py-2 fw-bold', onClick: () => fetchNews() }, 'फेरि प्रयास गर्नुहोस्'),
-          e('pre', { className: 'text-start small mt-4 p-3 rounded-3', style: { userSelect: 'text', WebkitUserSelect: 'text', whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.05)', color: 'inherit', maxHeight: '240px', overflow: 'auto' } },
-            Object.entries(FEED_DEBUG).slice(0, 6).map(([k, v]) => k + ' → ' + v).join('\n') || 'No response yet')
         )
       );
 
@@ -551,7 +490,7 @@
         ),
 
         e('main', { className: 'container-fluid p-0' },
-          loading ? renderShimmerLoader() : (allNews.length === 0 && currentView !== 'saved') ? renderEmptyState() : e('div', null,
+          loading ? renderShimmerLoader() : e('div', null,
             
             currentView === 'categories' && e('div', { id: 'categorySection' },
               [
